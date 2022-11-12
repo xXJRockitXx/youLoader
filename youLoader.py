@@ -4,6 +4,7 @@ import os
 from yt_dlp import YoutubeDL
 import tkinter as tk
 from tkinter.filedialog import askdirectory
+from threading import *
 
 def app_config(app, width, height):
     app.geometry("%dx%d" % (width, height))
@@ -17,9 +18,10 @@ height= app.winfo_screenheight()
 app_config(app, width, height)
 
 link = tk.StringVar()
+stop_event = Event()
+songCounter = 0
 
 class MyLogger(object):
-
     def debug(self, msg):
         pass
 
@@ -30,9 +32,31 @@ class MyLogger(object):
         print(msg)
 
 
+def restart():
+    """ Kills the whole application and starts a fresh one """
+    global app
+    app.destroy()
+    app = tk.Tk()
+    app_config(app, width, height)
+    app.mainloop()
+
+
 def my_hook(d):
+    """ In this label we're show a counter with the downloaded songs """
+    global songCounter
+    
+    lblCounter = tk.Label(app,
+                            text="Downloads Completed: "+ str(songCounter + 1),
+                            textvariable="Downloads Completed: " + str(songCounter + 1),
+                            fg="white",
+                            relief="flat",
+                            font=('Arial 18'),
+                            bg="#404258")
+    
     if d['status'] == 'finished':
-        print('Download complete, converting ...') 
+        songCounter += 1
+        print('Download complete, converting ...' + str(songCounter)) 
+        lblCounter.place(x=20, y=width * 0.18)
 
 
 def download_directory():
@@ -56,7 +80,11 @@ def download_directory():
     btnDownload.place(x=20, y=width * 0.15)
     
     
-def download():
+def download(event):
+    """ Reset the counter """
+    global songCounter
+    songCounter = 0
+    
     ydl_opts = {
         'format': 'bestaudio/best',
         'writethumbnail': True,
@@ -76,9 +104,21 @@ def download():
     }
     
     """ Starts downloading """
-    with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([link.get()])
-    
+    while not event.is_set():    
+        lblCounter.place(x=20, y=width * 0.18)
+        
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([link.get()])
+            
+        stop_event.set()
+        
+    btnRestart.place(x=20, y=width * 0.21)
+
+
+def task():
+    global downloadThread
+    downloadThread = Thread(target=download, args=(stop_event,), daemon=True, name="Download")
+    downloadThread.start()
     
 """ In this label we're gonna show the instructions """
 lblInstructions = tk.Label(app,
@@ -89,6 +129,15 @@ lblInstructions = tk.Label(app,
                             bg="#404258")
 
 lblInstructions.place(x=20, y=5)
+
+
+lblCounter = tk.Label(app,
+                        text="Downloads Completed: "+ str(songCounter),
+                        textvariable="Downloads Completed: " + str(songCounter),
+                        fg="white",
+                        relief="flat",
+                        font=('Arial 18'),
+                        bg="#404258")
 
 
 """ This entry for the link of the song or playlist """
@@ -119,7 +168,16 @@ btnDownload = tk.Button(app,
           font=("Courier", 14), 
           bg="#50577A",
           fg="white",
-          command= download,
+          command= task,
+          relief="flat")
+
+""" This button for restart the app """
+btnRestart = tk.Button(app, 
+          text="New\nDownload", 
+          font=("Courier", 14), 
+          bg="#50577A",
+          fg="white",
+          command= restart,
           relief="flat")
 
 app.mainloop()

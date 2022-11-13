@@ -20,6 +20,7 @@ app_config(app, width, height)
 link = tk.StringVar()
 stop_event = Event()
 songCounter = 0
+lblPath = tk.Label()
 
 class MyLogger(object):
     def debug(self, msg):
@@ -45,35 +46,36 @@ def my_hook(d):
     """ In this label we're show a counter with the downloaded songs """
     global songCounter
     
-    lblCounter = create_label(app, "Downloads Completed: " + str(songCounter + 1), "Arial 18", "#404258", "white", "flat", "left")
-    """ lblCounter.place(x=20, y=width * 0.18) """
-    
     if d['status'] == 'finished':
         songCounter += 1
-        print('Download complete, converting ...' + str(songCounter)) 
-        """ lblCounter.config(text="Downloads Completed: " + str(songCounter)) """
+        lblCounter = create_label(app, "Downloads Completed: " + str(songCounter) + 
+                              "\nPlease wait Please wait until \"Done!\"", "Arial 18", "#404258", "white", "flat", "left")
         lblCounter.place(x=20, y=width * 0.18)
 
 
 def download_directory():
     """ We're gonna "Open" dialog box and return the 
     path to the selected file """
+    global lblPath
+    lblPath.destroy()
     filename = askdirectory()
     global path
     path = filename
     
     lblPath = create_label(app, "Your song will be here: \n" + filename, "Arial 15", "#404258", "white", "flat", "left")
-    
     lblPath.place(x=20, y=width * 0.11)
+    
     """ Once we have the directory we can start the download """
     btnDownload.place(x=20, y=width * 0.15)
     
     
 def download():
     """ Reset the counter """
+    global lblComplete
     global songCounter
     songCounter = 0
     btnRestart.place_forget()
+    lblComplete.destroy()
     
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -93,16 +95,19 @@ def download():
         'progress_hooks': [my_hook],
     }
            
-    """ lblCounter = create_label(app, "Downloads Completed: " + str(songCounter + 1), "Arial 18", "#404258", "white", "flat", "left") """
+    lblCounter = create_label(app, "Downloads Completed: " + str(songCounter) + 
+                              "\nPlease wait Please wait until \"Done!\"", "Arial 18", "#404258", "white", "flat", "left")
     lblCounter.place(x=20, y=width * 0.18)
         
     with YoutubeDL(ydl_opts) as ydl:
         ydl.download([link.get()])
                     
-    btnRestart.place(x=20, y=width * 0.21)
+    lblComplete = create_label(app, "Done!", "Arial 18", "#404258", "white", "flat", "left")
+    lblComplete.place(x=20, y=width * 0.23)
 
 
 def task():
+    """ This thread for the downloads, so the GUI doesn't freeze """
     downloadThread = Thread(target=download, name="Download")
     downloadThread.start()
 
@@ -117,14 +122,6 @@ def create_label(app, textValue, fontValue, background, foreground, rel, align):
                     font=(fontValue),
                     justify=align,
                     bg=background)
-                    
-    """ lbl = tk.Label(app,
-                    textvariable=textValue,
-                    fg=foreground,
-                    relief=rel,
-                    font=(fontValue),
-                    justify=align,
-                    bg=background) """
     
     return lbl
 
@@ -157,8 +154,8 @@ def create_button(app, textValue, fontValue, background, foreground, comm, rel):
 lblInstructions = create_label(app, "Insert the link of a song or playlist:", "Arial 18", "#404258", "white", "flat", "left")
 lblInstructions.place(x=20, y=5)
 
-""" In this label we're gonna show the number of donwloaded songs """
-lblCounter = create_label(app, "Downloads Completed: " + str(songCounter), "Arial 18", "#404258", "white", "flat", "left")
+""" With this label, we will notify the download complete """
+lblComplete = create_label(app, "Done!", "Arial 18", "#404258", "white", "flat", "left")
 
 """ This entry for the link of the song or playlist """
 entLink = create_entry(app, "#6B728E", "white", "flat", link, 100)

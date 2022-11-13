@@ -11,7 +11,7 @@ def app_config(app, width, height):
     app.configure(background="#404258")
     tk.Wm.wm_title(app, "YouLoader")
 
-""" We init the app and configure """
+""" Creating the app and configs """
 app = tk.Tk()
 width= app.winfo_screenwidth()
 height= app.winfo_screenheight()
@@ -45,17 +45,13 @@ def my_hook(d):
     """ In this label we're show a counter with the downloaded songs """
     global songCounter
     
-    lblCounter = tk.Label(app,
-                            text="Downloads Completed: "+ str(songCounter + 1),
-                            textvariable="Downloads Completed: " + str(songCounter + 1),
-                            fg="white",
-                            relief="flat",
-                            font=('Arial 18'),
-                            bg="#404258")
+    lblCounter = create_label(app, "Downloads Completed: " + str(songCounter + 1), "Arial 18", "#404258", "white", "flat", "left")
+    """ lblCounter.place(x=20, y=width * 0.18) """
     
     if d['status'] == 'finished':
         songCounter += 1
         print('Download complete, converting ...' + str(songCounter)) 
+        """ lblCounter.config(text="Downloads Completed: " + str(songCounter)) """
         lblCounter.place(x=20, y=width * 0.18)
 
 
@@ -66,24 +62,18 @@ def download_directory():
     global path
     path = filename
     
-    lblPath = tk.Label(app,
-                    text="Your song will be here: \n" + filename,
-                    textvariable="Your song will be here: \n" + filename,
-                    fg="white",
-                    relief="flat",
-                    justify="left",
-                    font=('Arial 15'),
-                    bg="#404258")
+    lblPath = create_label(app, "Your song will be here: \n" + filename, "Arial 15", "#404258", "white", "flat", "left")
     
     lblPath.place(x=20, y=width * 0.11)
     """ Once we have the directory we can start the download """
     btnDownload.place(x=20, y=width * 0.15)
     
     
-def download(event):
+def download():
     """ Reset the counter """
     global songCounter
     songCounter = 0
+    btnRestart.place_forget()
     
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -102,82 +92,86 @@ def download(event):
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
     }
-    
-    """ Starts downloading """
-    while not event.is_set():    
-        lblCounter.place(x=20, y=width * 0.18)
+           
+    """ lblCounter = create_label(app, "Downloads Completed: " + str(songCounter + 1), "Arial 18", "#404258", "white", "flat", "left") """
+    lblCounter.place(x=20, y=width * 0.18)
         
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([link.get()])
-            
-        stop_event.set()
-        
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([link.get()])
+                    
     btnRestart.place(x=20, y=width * 0.21)
 
 
 def task():
-    global downloadThread
-    downloadThread = Thread(target=download, args=(stop_event,), daemon=True, name="Download")
+    downloadThread = Thread(target=download, name="Download")
     downloadThread.start()
-    
-""" In this label we're gonna show the instructions """
-lblInstructions = tk.Label(app,
-                            text="Insert the link of a song or playlist:",
-                            fg="white",
-                            relief="flat",
-                            font=('Arial 18'),
-                            bg="#404258")
 
+
+def create_label(app, textValue, fontValue, background, foreground, rel, align):
+    """ Creates a new Label """
+    lbl = tk.Label(app,
+                    text=textValue,
+                    textvariable=textValue,
+                    fg=foreground,
+                    relief=rel,
+                    font=(fontValue),
+                    justify=align,
+                    bg=background)
+                    
+    """ lbl = tk.Label(app,
+                    textvariable=textValue,
+                    fg=foreground,
+                    relief=rel,
+                    font=(fontValue),
+                    justify=align,
+                    bg=background) """
+    
+    return lbl
+
+
+def create_entry(app, background, foreground, rel, variable, wth):
+    """ Creates a new Entry """
+    ent = tk.Entry(app, 
+                    bg=background,
+                    fg=foreground,
+                    relief=rel,
+                    textvariable=variable,
+                    width= wth)
+    
+    return ent
+
+def create_button(app, textValue, fontValue, background, foreground, comm, rel):
+    """ Creates a new Button """
+    button = tk.Button(app, 
+                        text=textValue, 
+                        font=(fontValue), 
+                        bg=background,
+                        fg=foreground,
+                        command= comm,
+                        relief=rel)
+    
+    return button
+
+
+""" In this label we're gonna show the instructions """
+lblInstructions = create_label(app, "Insert the link of a song or playlist:", "Arial 18", "#404258", "white", "flat", "left")
 lblInstructions.place(x=20, y=5)
 
-
-lblCounter = tk.Label(app,
-                        text="Downloads Completed: "+ str(songCounter),
-                        textvariable="Downloads Completed: " + str(songCounter),
-                        fg="white",
-                        relief="flat",
-                        font=('Arial 18'),
-                        bg="#404258")
-
+""" In this label we're gonna show the number of donwloaded songs """
+lblCounter = create_label(app, "Downloads Completed: " + str(songCounter), "Arial 18", "#404258", "white", "flat", "left")
 
 """ This entry for the link of the song or playlist """
-entLink = tk.Entry(app, 
-                    bg="#6B728E",
-                    fg="white",
-                    relief="flat",
-                    textvariable=link,
-                    width= 100)
-
+entLink = create_entry(app, "#6B728E", "white", "flat", link, 100)
 entLink.place(height=30,x=20, y=width * 0.03)
 
-
 """ This button for choosing the download directory """
-btnDirectory = tk.Button(app, 
-          text="Choose\nDirectory", 
-          font=("Courier", 14), 
-          bg="#50577A",
-          fg="white",
-          command= download_directory,
-          relief="flat")
+btnDirectory = create_button(app, "Choose\nDirectory", "Courier 14", "#50577A", "white", download_directory, "flat")
 btnDirectory.place(x=20, y=width * 0.06)
 
-
 """ This button for start the download """
-btnDownload = tk.Button(app, 
-          text="Download", 
-          font=("Courier", 14), 
-          bg="#50577A",
-          fg="white",
-          command= task,
-          relief="flat")
+btnDownload = create_button(app, "Download", "Courier 14", "#50577A", "white", task, "flat")
 
 """ This button for restart the app """
-btnRestart = tk.Button(app, 
-          text="New\nDownload", 
-          font=("Courier", 14), 
-          bg="#50577A",
-          fg="white",
-          command= restart,
-          relief="flat")
+btnRestart = create_button(app, "New\nDownload", "Courier 14", "#50577A", "white", restart, "flat")
 
 app.mainloop()

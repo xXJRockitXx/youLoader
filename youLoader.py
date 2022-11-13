@@ -49,7 +49,7 @@ def my_hook(d):
     if d['status'] == 'finished':
         songCounter += 1
         lblCounter = create_label(app, "Downloads Completed: " + str(songCounter) + 
-                              "\nPlease wait Please wait until \"Done!\"", "Arial 18", "#404258", "white", "flat", "left")
+                              "\nPlease wait until \"Done!\"", "Arial 18", "#404258", "white", "flat", "left")
         lblCounter.place(x=20, y=width * 0.18)
 
 
@@ -96,7 +96,7 @@ def download():
     }
            
     lblCounter = create_label(app, "Downloads Completed: " + str(songCounter) + 
-                              "\nPlease wait Please wait until \"Done!\"", "Arial 18", "#404258", "white", "flat", "left")
+                              "\nPlease wait until \"Done!\"", "Arial 18", "#404258", "white", "flat", "left")
     lblCounter.place(x=20, y=width * 0.18)
         
     with YoutubeDL(ydl_opts) as ydl:
